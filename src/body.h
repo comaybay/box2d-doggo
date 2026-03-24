@@ -61,7 +61,7 @@ typedef struct b2Body
 {
 	char name[B2_NAME_LENGTH];
 
-	void* userData;
+	int32_t userData;
 
 	// index of solver set stored in b2World
 	// may be B2_NULL_INDEX

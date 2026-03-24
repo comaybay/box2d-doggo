@@ -1037,14 +1037,14 @@ b2WorldId b2Shape_GetWorld( b2ShapeId shapeId )
 	return (b2WorldId){ shapeId.world0 + 1, world->generation };
 }
 
-void b2Shape_SetUserData( b2ShapeId shapeId, void* userData )
+void b2Shape_SetUserData( b2ShapeId shapeId, int32_t userData )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );
 	shape->userData = userData;
 }
 
-void* b2Shape_GetUserData( b2ShapeId shapeId )
+int32_t b2Shape_GetUserData( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
 	b2Shape* shape = b2GetShape( world, shapeId );

@@ -11,7 +11,7 @@
 #include <float.h>
 #include <string.h>
 
-#define B2_TREE_STACK_SIZE 1024
+#define B2_TREE_STACK_SIZE 21024
 
 enum b2TreeNodeFlags
 {

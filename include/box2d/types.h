@@ -208,7 +208,7 @@ typedef struct b2BodyDef
 	const char* name;
 
 	/// Use this to store application specific body data.
-	void* userData;
+	int32_t userData;
 
 	/// Motions locks to restrict linear and angular movement.
 	/// Caution: may lead to softer constraints along the locked direction
@@ -370,7 +370,7 @@ B2_API b2SurfaceMaterial b2DefaultSurfaceMaterial( void );
 typedef struct b2ShapeDef
 {
 	/// Use this to store application specific shape data.
-	void* userData;
+	int32_t userData;
 
 	/// The surface material for this shape.
 	b2SurfaceMaterial material;
@@ -444,7 +444,7 @@ B2_API b2ShapeDef b2DefaultShapeDef( void );
 typedef struct b2ChainDef
 {
 	/// Use this to store application specific shape data.
-	void* userData;
+	int32_t userData;
 
 	/// An array of at least 4 points. These are cloned and may be temporary.
 	const b2Vec2* points;
@@ -1054,7 +1054,7 @@ typedef struct b2ContactEvents
 /// @note If sleeping is disabled all dynamic and kinematic bodies will trigger move events.
 typedef struct b2BodyMoveEvent
 {
-	void* userData;
+	int32_t userData;
 	b2Transform transform;
 	b2BodyId bodyId;
 	bool fellAsleep;
