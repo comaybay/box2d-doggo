@@ -1328,14 +1328,14 @@ const char* b2Body_GetName( b2BodyId bodyId )
 	return body->name;
 }
 
-void b2Body_SetUserData( b2BodyId bodyId, int32_t userData )
+void b2Body_SetUserData( b2BodyId bodyId, b2UserDataId userData )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );
 	body->userData = userData;
 }
 
-int32_t b2Body_GetUserData( b2BodyId bodyId )
+b2UserDataId b2Body_GetUserData( b2BodyId bodyId )
 {
 	b2World* world = b2GetWorld( bodyId.world0 );
 	b2Body* body = b2GetBodyFullId( world, bodyId );

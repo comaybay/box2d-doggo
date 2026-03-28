@@ -247,10 +247,10 @@ B2_API void b2Body_SetName( b2BodyId bodyId, const char* name );
 B2_API const char* b2Body_GetName( b2BodyId bodyId );
 
 /// Set the user data for a body
-B2_API void b2Body_SetUserData( b2BodyId bodyId, int32_t userData );
+B2_API void b2Body_SetUserData( b2BodyId bodyId, b2UserDataId userData );
 
 /// Get the user data stored in a body
-B2_API int32_t b2Body_GetUserData( b2BodyId bodyId );
+B2_API b2UserDataId b2Body_GetUserData( b2BodyId bodyId );
 
 /// Get the world position of a body. This is the location of the body origin.
 B2_API b2Vec2 b2Body_GetPosition( b2BodyId bodyId );
@@ -548,11 +548,11 @@ B2_API b2WorldId b2Shape_GetWorld( b2ShapeId shapeId );
 B2_API bool b2Shape_IsSensor( b2ShapeId shapeId );
 
 /// Set the user data for a shape
-B2_API void b2Shape_SetUserData( b2ShapeId shapeId, int32_t userData );
+B2_API void b2Shape_SetUserData( b2ShapeId shapeId, b2UserDataId userData );
 
 /// Get the user data for a shape. This is useful when you get a shape id
 /// from an event or query.
-B2_API int32_t b2Shape_GetUserData( b2ShapeId shapeId );
+B2_API b2UserDataId b2Shape_GetUserData( b2ShapeId shapeId );
 
 /// Set the mass density of a shape, usually in kg/m^2.
 /// This will optionally update the mass properties on the parent body.

@@ -27,7 +27,7 @@ typedef struct b2Shape
 	int proxyKey;
 
 	b2Filter filter;
-	int32_t userData;
+	b2UserDataId userData;
 
 	union
 	{

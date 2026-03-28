@@ -11,6 +11,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/// Stored in body/shape \c userData. Same layout as \c godot::Vector2i (x = slot, y = generation).
+typedef struct b2UserDataId
+{
+	int32_t x;
+	int32_t y;
+} b2UserDataId;
+
 #define B2_DEFAULT_CATEGORY_BITS 1
 #define B2_DEFAULT_MASK_BITS UINT64_MAX
 
@@ -208,7 +215,7 @@ typedef struct b2BodyDef
 	const char* name;
 
 	/// Use this to store application specific body data.
-	int32_t userData;
+	b2UserDataId userData;
 
 	/// Motions locks to restrict linear and angular movement.
 	/// Caution: may lead to softer constraints along the locked direction
@@ -370,7 +377,7 @@ B2_API b2SurfaceMaterial b2DefaultSurfaceMaterial( void );
 typedef struct b2ShapeDef
 {
 	/// Use this to store application specific shape data.
-	int32_t userData;
+	b2UserDataId userData;
 
 	/// The surface material for this shape.
 	b2SurfaceMaterial material;
@@ -444,7 +451,7 @@ B2_API b2ShapeDef b2DefaultShapeDef( void );
 typedef struct b2ChainDef
 {
 	/// Use this to store application specific shape data.
-	int32_t userData;
+	b2UserDataId userData;
 
 	/// An array of at least 4 points. These are cloned and may be temporary.
 	const b2Vec2* points;
@@ -1054,7 +1061,7 @@ typedef struct b2ContactEvents
 /// @note If sleeping is disabled all dynamic and kinematic bodies will trigger move events.
 typedef struct b2BodyMoveEvent
 {
-	int32_t userData;
+	b2UserDataId userData;
 	b2Transform transform;
 	b2BodyId bodyId;
 	bool fellAsleep;
