@@ -554,6 +554,11 @@ B2_API void b2Shape_SetUserData( b2ShapeId shapeId, b2UserDataId userData );
 /// from an event or query.
 B2_API b2UserDataId b2Shape_GetUserData( b2ShapeId shapeId );
 
+/// Set the broad-phase fat-AABB margin for a shape, in meters. Overrides Box2D's default
+/// size-derived margin (b2ComputeShapeMargin). Applied on the next fat-AABB recompute (when
+/// the shape's tight AABB next escapes its fat AABB), matching Box2D's lazy AABB model.
+B2_API void b2Shape_SetAABBMargin( b2ShapeId shapeId, float margin );
+
 /// Set the mass density of a shape, usually in kg/m^2.
 /// This will optionally update the mass properties on the parent body.
 /// @see b2ShapeDef::density, b2Body_ApplyMassFromShapes

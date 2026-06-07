@@ -1051,6 +1051,13 @@ b2UserDataId b2Shape_GetUserData( b2ShapeId shapeId )
 	return shape->userData;
 }
 
+void b2Shape_SetAABBMargin( b2ShapeId shapeId, float margin )
+{
+	b2World* world = b2GetWorld( shapeId.world0 );
+	b2Shape* shape = b2GetShape( world, shapeId );
+	shape->aabbMargin = margin;
+}
+
 bool b2Shape_IsSensor( b2ShapeId shapeId )
 {
 	b2World* world = b2GetWorld( shapeId.world0 );
