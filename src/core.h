@@ -7,8 +7,6 @@
 
 // clang-format off
 
-#define B2_NULL_INDEX ( -1 )
-
 // for performance comparisons
 #define B2_RESTRICT restrict
 
@@ -93,11 +91,13 @@
 	#define b2TracyCZoneNC( ctx, name, color, active ) TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx ) TracyCZoneEnd( ctx )
 	#define b2TracyCFrame TracyCFrameMark
+	#define b2TracyCSetThreadName( name ) TracyCSetThreadName( name )
 #else
 	#define b2TracyCZoneC( ctx, color, active )
 	#define b2TracyCZoneNC( ctx, name, color, active )
 	#define b2TracyCZoneEnd( ctx )
 	#define b2TracyCFrame
+	#define b2TracyCSetThreadName( name )
 #endif
 
 // clang-format on
@@ -149,29 +149,32 @@ typedef struct b2AtomicU32
 	uint32_t value;
 } b2AtomicU32;
 
-void* b2Alloc( int size );
-void* b2AllocZeroInit( int size );
+typedef struct b2AtomicI64
+{
+	int64_t value;
+} b2AtomicI64;
+
+void* b2Alloc( size_t size );
+void* b2AllocZeroInit( size_t size );
 #define B2_ALLOC_STRUCT( type ) b2Alloc(sizeof(type))
 #define B2_ALLOC_ARRAY( count, type ) b2Alloc(count * sizeof(type))
 
-void b2Free( void* mem, int size );
+void b2Free( void* mem, size_t size );
 #define B2_FREE_STRUCT( mem, type ) b2Free( mem, sizeof(type));
 #define B2_FREE_ARRAY( mem, count, type ) b2Free(mem, count * sizeof(type))
 
-void* b2GrowAlloc( void* oldMem, int oldSize, int newSize );
-void* b2GrowAllocZeroInit( void* oldMem, int oldSize, int newSize );
+void* b2GrowAlloc( void* oldMem, size_t oldSize, size_t newSize );
+void* b2GrowAllocZeroInit( void* oldMem, size_t oldSize, size_t newSize );
 
 void b2Log( const char* format, ... );
 
 typedef struct b2Mutex b2Mutex;
-
 b2Mutex* b2CreateMutex( void );
 void b2DestroyMutex( b2Mutex* m );
 void b2LockMutex( b2Mutex* m );
 void b2UnlockMutex( b2Mutex* m );
 
 typedef struct b2Semaphore b2Semaphore;
-
 b2Semaphore* b2CreateSemaphore( int initCount );
 void b2DestroySemaphore( b2Semaphore* s );
 void b2WaitSemaphore( b2Semaphore* s );
@@ -179,7 +182,6 @@ void b2SignalSemaphore( b2Semaphore* s );
 
 typedef void b2ThreadFunction( void* context );
 typedef struct b2Thread b2Thread;
-
 // Name may be NULL, otherwise it is copied.
 b2Thread* b2CreateThread( b2ThreadFunction* function, void* context, const char* name );
 void b2JoinThread( b2Thread* t );

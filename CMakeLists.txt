@@ -1,5 +1,4 @@
 ﻿cmake_minimum_required(VERSION 3.22)
-include(FetchContent)
 include(CMakeDependentOption)
 
 project(box2d
@@ -21,7 +20,7 @@ message(STATUS "CMake host system processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 # static link to make leak checking easier (_crtBreakAlloc)
 # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-if (MSVC OR APPLE)
+if (MSVC OR APPLE OR (UNIX AND NOT APPLE))
 	option(BOX2D_SANITIZE "Enable sanitizers for some builds" OFF)
 	if(BOX2D_SANITIZE)
 		message(STATUS "Box2D Sanitize")
@@ -45,8 +44,12 @@ endif()
 
 # Deterministic math
 # https://box2d.org/posts/2024/08/determinism/
-if (MINGW OR APPLE OR UNIX)
+if (MINGW OR UNIX)
 	add_compile_options(-ffp-contract=off)
+elseif (MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
+	# clang-cl contracts multiply add into FMA under AVX2, diverging from non FMA builds.
+	# The plain driver flag is dropped, so force it through to the frontend.
+	add_compile_options(/clang:-ffp-contract=off)
 endif()
 
 option(BOX2D_DISABLE_SIMD "Disable SIMD math (slower)" OFF)
@@ -58,11 +61,9 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Needed for samples.exe to find box2d.dll
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+# Leaving this here for testing
+# set(CMAKE_VERBOSE_MAKEFILE ON)
 
 add_subdirectory(src)
 
@@ -75,6 +76,10 @@ if(PROJECT_IS_TOP_LEVEL)
 	option(BOX2D_VALIDATE "Enable heavy validation" ON)
 	option(BOX2D_UNIT_TESTS "Build the Box2D unit tests" ON)
 	
+	# Needed for samples.exe to find box2d.dll
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+
 	if(BOX2D_UNIT_TESTS OR BOX2D_SAMPLES OR BOX2D_BENCHMARKS)
 		# Emscripten pthread support
 		if(EMSCRIPTEN)
@@ -93,7 +98,7 @@ if(PROJECT_IS_TOP_LEVEL)
 		message(STATUS "Adding Box2D unit tests")
 		add_subdirectory(test)
 		set_target_properties(test PROPERTIES XCODE_GENERATE_SCHEME TRUE)
-	else()
+	elseif(BOX2D_UNIT_TESTS)
 		message(STATUS "Skipping Box2D unit tests")
 	endif()
 

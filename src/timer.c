@@ -4,7 +4,7 @@
 // Required on Linux to expose pthread_setname_np. Must be defined before any
 // system header is included.
 #if defined( __linux__ ) && !defined( _GNU_SOURCE )
-	#define _GNU_SOURCE
+#define _GNU_SOURCE
 #endif
 
 #include "core.h"
@@ -13,9 +13,8 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 
-#if defined( _MSC_VER )
+#if defined( _WIN32 )
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
@@ -161,12 +160,27 @@ static void b2SetCurrentThreadName( const char* name )
 		HMODULE kernel = GetModuleHandleW( L"kernel32.dll" );
 		if ( kernel != NULL )
 		{
-			// MSVC /Wall warns C4191 on every FARPROC function-pointer cast.
-			// This is the intended use of GetProcAddress, so suppress locally.
+			// MSVC /Wall warns C4191 and GCC/Clang -Wcast-function-type
+			// warns on every FARPROC function-pointer cast. This is the
+			// intended use of GetProcAddress, so suppress locally.
+#if defined( __clang__ )
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-function-type"
+#elif defined( _MSC_VER )
 #pragma warning( push )
 #pragma warning( disable : 4191 )
+#elif defined( __GNUC__ )
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 			pfn = (b2SetThreadDescriptionFn)GetProcAddress( kernel, "SetThreadDescription" );
+#if defined( __clang__ )
+#pragma clang diagnostic pop
+#elif defined( _MSC_VER )
 #pragma warning( pop )
+#elif defined( __GNUC__ )
+#pragma GCC diagnostic pop
+#endif
 		}
 		resolved = 1;
 	}
@@ -188,6 +202,7 @@ static DWORD WINAPI b2ThreadStart( LPVOID param )
 {
 	b2Thread* t = (b2Thread*)param;
 	b2SetCurrentThreadName( t->name );
+	b2TracyCSetThreadName( t->name );
 	t->function( t->context );
 	return 0;
 }
@@ -327,7 +342,7 @@ static void b2SetCurrentThreadName( const char* name )
 #if defined( __linux__ )
 	// Linux caps thread names at 15 chars + null terminator.
 	char truncated[16];
-	snprintf( truncated, sizeof( truncated ), "%s", name );
+	snprintf( truncated, sizeof( truncated ), "%.15s", name );
 	pthread_setname_np( pthread_self(), truncated );
 #else
 	(void)name;
@@ -338,6 +353,7 @@ static void* b2ThreadStart( void* param )
 {
 	b2Thread* t = (b2Thread*)param;
 	b2SetCurrentThreadName( t->name );
+	b2TracyCSetThreadName( t->name );
 	t->function( t->context );
 	return NULL;
 }
@@ -507,6 +523,7 @@ static void* b2ThreadStart( void* param )
 {
 	b2Thread* t = (b2Thread*)param;
 	b2SetCurrentThreadName( t->name );
+	b2TracyCSetThreadName( t->name );
 	t->function( t->context );
 	return NULL;
 }

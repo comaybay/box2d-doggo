@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "array.h"
+#include "container.h"
 #include "core.h"
 
 #include "box2d/collision.h"
@@ -22,6 +22,29 @@ enum b2ContactFlags
 
 	// This contact wants contact events
 	b2_contactEnableContactEvents = 0x00000004,
+
+	b2_contactRecycleFlag = 0x00000008,
+
+	// Set when the shapes are touching
+	b2_simTouchingFlag = 0x00010000,
+
+	// This contact no longer has overlapping AABBs
+	b2_simDisjoint = 0x00020000,
+
+	// This contact started touching
+	b2_simStartedTouching = 0x00040000,
+
+	// This contact stopped touching
+	b2_simStoppedTouching = 0x00080000,
+
+	// This contact has a hit event
+	b2_simEnableHitEvent = 0x00100000,
+
+	// This contact wants pre-solve events
+	b2_simEnablePreSolveEvents = 0x00200000,
+
+	// This contact has a cached relative transform
+	b2_simRelativeTransformValid = 0x00400000,
 };
 
 // A contact edge is used to connect bodies and contacts together
@@ -74,31 +97,6 @@ typedef struct b2Contact
 	uint32_t generation;
 } b2Contact;
 
-// Shifted to be distinct from b2ContactFlags
-enum b2ContactSimFlags
-{
-	// Set when the shapes are touching
-	b2_simTouchingFlag = 0x00010000,
-
-	// This contact no longer has overlapping AABBs
-	b2_simDisjoint = 0x00020000,
-
-	// This contact started touching
-	b2_simStartedTouching = 0x00040000,
-
-	// This contact stopped touching
-	b2_simStoppedTouching = 0x00080000,
-
-	// This contact has a hit event
-	b2_simEnableHitEvent = 0x00100000,
-
-	// This contact wants pre-solve events
-	b2_simEnablePreSolveEvents = 0x00200000,
-
-	// This contact has a cached relative transform
-	b2_simRelativeTransformValid = 0x00400000,
-};
-
 /// The class manages contact between two shapes. A contact exists for each overlapping
 /// AABB in the broad-phase (except if filtered). Therefore a contact object may exist
 /// that has no contact points.
@@ -135,7 +133,7 @@ typedef struct b2ContactSim
 	float rollingResistance;
 	float tangentSpeed;
 
-	// b2ContactSimFlags
+	// b2ContactFlags
 	uint32_t simFlags;
 
 	b2SimplexCache cache;
@@ -152,5 +150,5 @@ b2ContactSim* b2GetContactSim( b2World* world, b2Contact* contact );
 bool b2UpdateContact( b2World* world, b2ContactSim* contactSim, b2Shape* shapeA, b2Transform transformA, b2Vec2 centerOffsetA,
 					  b2Shape* shapeB, b2Transform transformB, b2Vec2 centerOffsetB );
 
-B2_ARRAY_INLINE( b2Contact, b2Contact )
-B2_ARRAY_INLINE( b2ContactSim, b2ContactSim )
+b2DeclareArray( b2Contact );
+b2DeclareArray( b2ContactSim );

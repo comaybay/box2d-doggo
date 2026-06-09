@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "box2d/id.h"
-#include "box2d/types.h"
 #include "draw.h"
+#include "imgui.h"
+
+#include "box2d/box2d.h"
 
 #define ARRAY_COUNT( A ) (int)( sizeof( A ) / sizeof( A[0] ) )
 
@@ -19,42 +20,80 @@ struct SampleContext
 	struct GLFWwindow* window = nullptr;
 	Camera camera;
 	Draw* draw;
+	class Sample* sample = nullptr;
+	b2Capacity capacity;
+	b2DebugDraw debugDraw;
 	float uiScale = 1.0f;
 	float hertz = 60.0f;
+	float recycleDistance = 0.05f;
 	int subStepCount = 4;
 	int workerCount = 1;
 	bool restart = false;
 	bool pause = false;
 	bool singleStep = false;
-	bool drawCounters = false;
-	bool drawProfile = false;
 	bool enableWarmStarting = true;
 	bool enableContinuous = true;
-	bool enableRecycling = true;
 	bool enableSleep = true;
 	bool showUI = true;
-	bool frameTime = false;
+
+	// Diagnostics drawer visibility. D toggles.
+	bool showMetrics = false;
+
+	// Set by Ctrl+O; consumed by UpdateSampleUI to open the fuzzy sample picker.
+	bool openSamplePicker = false;
+
+	// Path the active recording is saved to when recording stops.
+	char recordingFile[256] = "recording.b2rec";
+
+	// Path the Replay menu hands to the viewer. Kept apart from the record path so opening a
+	// file to view never moves where the next recording lands.
+	char replayFile[256] = "";
 
 	// These are persisted
 	int sampleIndex = 0;
+	bool newUser = true;
 
-	b2DebugDraw debugDraw;
-	ImFont* regularFont;
-	ImFont* mediumFont;
-	ImFont* largeFont;
+	// Replay keyframe policy, persisted and used to seed the Load popup. Defaults match the
+	// engine defaults in recording_replay.c.
+	int replayKeyframeBudgetMB = 512;
+	int replayKeyframeMinInterval = 16;
 };
 
 class Sample
 {
 public:
-	explicit Sample( SampleContext* context );
+	// createWorld false lets a subclass that supplies its own world (e.g. the replay viewer)
+	// skip the throwaway world the base would otherwise build and immediately discard
+	explicit Sample( SampleContext* context, bool createWorld = true );
 	virtual ~Sample();
 
-	void CreateWorld( );
+	void CreateWorld();
+
+	// Snapshot the live world and begin recording into a host-owned buffer
+	void StartRecording();
+
+	// Stop the active recording if any, save it to context->recordingFile, and free it
+	void FinishRecording();
 
 	void ResetText();
-	virtual void Step( );
-	virtual void UpdateGui();
+	virtual void Step();
+
+	virtual bool DrawControls()
+	{
+		return false;
+	}
+
+	// Allow solver controls to be hidden by a sample.
+	virtual bool HasSolverControls() const
+	{
+		return true;
+	}
+
+	// Allow a sample to add extra tabs to the metrics window.
+	virtual void DrawMetricsTab()
+	{
+	}
+
 	virtual void Keyboard( int )
 	{
 	}
@@ -62,10 +101,10 @@ public:
 	virtual void MouseUp( b2Vec2 p, int button );
 	virtual void MouseMove( b2Vec2 p );
 
-	void DrawTextLine( const char* text, ... );
-	void DrawColoredTextLine( b2HexColor color, const char* text, ... );
+	void DrawMetrics();
+	void DrawHud( float frameTime );
+	void DrawScreenTextLine( const char* text, ... );
 	void ResetProfile();
-	void ShiftOrigin( b2Vec2 newOrigin );
 
 	static int ParsePath( const char* svgPath, b2Vec2 offset, b2Vec2* points, int capacity, float scale, bool reverseOrder );
 
@@ -90,35 +129,46 @@ public:
 	b2BodyId m_mouseBodyId;
 
 	b2WorldId m_worldId;
+	b2Recording* m_recording; // active recording buffer, owned here; NULL when not recording
+	int m_recordStartStep;	  // step the active recording began at, for the UI indicator
 	b2JointId m_mouseJointId;
 	b2Vec2 m_mousePoint;
 	float m_mouseForceScale;
 	int m_stepCount;
-	int m_textLine;
-	int m_textIncrement;
+	float m_screenTextY;
 
 	b2Profile m_profiles[m_profileCapacity];
 	int m_currentProfileIndex;
 	uint64_t m_profileReadIndex;
 	uint64_t m_profileWriteIndex;
 
-	b2Profile m_maxProfile;
-	b2Profile m_totalProfile;
-
 	bool m_didStep;
 };
 
 typedef Sample* SampleCreateFcn( SampleContext* context );
+typedef b2Capacity SampleCapacityFcn( void );
 
 int RegisterSample( const char* category, const char* name, SampleCreateFcn* fcn );
+int RegisterSampleWithCapacity( const char* category, const char* name, SampleCreateFcn* fcn, SampleCapacityFcn* capacityFcn );
+int RegisterReplay( const char* category, const char* name, SampleCreateFcn* fcn );
+void SelectSample( SampleContext* context, int selection, bool restart );
+void DrawUI( SampleContext* context, float frameTime );
 
 struct SampleEntry
 {
 	const char* category;
 	const char* name;
 	SampleCreateFcn* createFcn;
+	SampleCapacityFcn* capacityFcn;
 };
+
+inline ImVec4 MakeColor( b2HexColor hexColor )
+{
+	ImU32 color = IM_COL32( ( hexColor >> 16 ) & 0xFF, ( hexColor >> 8 ) & 0xFF, hexColor & 0xFF, 255 );
+	return ImGui::ColorConvertU32ToFloat4( color );
+}
 
 #define MAX_SAMPLES 256
 extern SampleEntry g_sampleEntries[MAX_SAMPLES];
 extern int g_sampleCount;
+extern int g_replayIndex;

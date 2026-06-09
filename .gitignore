@@ -1,4 +1,5 @@
 build/
+api/
 imgui.ini
 settings.ini
 .vscode/
@@ -12,3 +13,4 @@ CMakeUserPresets.json
 .tmp/
 AGENTS.md
 GEMINI.md
+*.b2rec

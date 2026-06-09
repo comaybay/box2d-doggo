@@ -3,7 +3,11 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
+
+/// Used to indicate an unset or invalid index value.
+#define B2_NULL_INDEX ( -1 )
 
 // clang-format off
 // 
@@ -52,12 +56,12 @@
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
-typedef void* b2AllocFcn( unsigned int size, int alignment );
+typedef void* b2AllocFcn( size_t size, int alignment );
 
 /// Prototype for user free function
 /// @param mem the memory previously allocated through `b2AllocFcn`
 /// @param size the allocation size in bytes
-typedef void b2FreeFcn( void* mem, unsigned int size );
+typedef void b2FreeFcn( void* mem, size_t size );
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 typedef int b2AssertFcn( const char* condition, const char* fileName, int lineNumber );
@@ -70,7 +74,7 @@ typedef void b2LogFcn( const char* message );
 B2_API void b2SetAllocator( b2AllocFcn* allocFcn, b2FreeFcn* freeFcn );
 
 /// @return the total bytes allocated by Box2D
-B2_API int b2GetByteCount( void );
+B2_API int64_t b2GetByteCount( void );
 
 /// Override the default assert function
 /// @param assertFcn a non-null assert callback

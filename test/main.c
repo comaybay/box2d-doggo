@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "test_macros.h"
+#include "box2d/base.h"
 
 #include <string.h>
 
@@ -32,23 +33,17 @@ extern int DistanceTest( void );
 extern int DynamicTreeTest( void );
 extern int IdTest( void );
 extern int MathTest( void );
+extern int RecordingTest( void );
+extern int RecordingOutlinerTest( void );
+extern int RecordingKeyframeTest( void );
+extern int RecordingScrubTest( void );
+extern int RecordingQueryScrubTest( void );
+extern int ReStepRaceTest( void );
 extern int ShapeTest( void );
+extern int SnapshotTest( void );
 extern int TableTest( void );
 extern int ThreadTest( void );
 extern int WorldTest( void );
-
-// Filter-aware test runner: skips tests that don't match the filter
-#define MAYBE_RUN_TEST( T )                                                                                                  \
-	do                                                                                                                       \
-	{                                                                                                                        \
-		if ( filter != NULL && strcmp( filter, #T ) != 0 )                                                                   \
-		{                                                                                                                    \
-			printf( "test skipped: " #T "\n" );                                                                              \
-			break;                                                                                                           \
-		}                                                                                                                    \
-		RUN_TEST( T );                                                                                                       \
-	}                                                                                                                        \
-	while ( false )
 
 int main( int argc, char** argv )
 {
@@ -71,6 +66,8 @@ int main( int argc, char** argv )
 		filter = argv[1];
 	}
 
+	uint64_t ticks = b2GetTicks();
+
 	printf( "Starting Box2D unit tests\n" );
 	if ( filter != NULL )
 	{
@@ -87,12 +84,22 @@ int main( int argc, char** argv )
 	MAYBE_RUN_TEST( DistanceTest );
 	MAYBE_RUN_TEST( DynamicTreeTest );
 	MAYBE_RUN_TEST( IdTest );
+	MAYBE_RUN_TEST( RecordingTest );
+	MAYBE_RUN_TEST( RecordingOutlinerTest );
+	MAYBE_RUN_TEST( RecordingKeyframeTest );
+	MAYBE_RUN_TEST( RecordingScrubTest );
+	MAYBE_RUN_TEST( RecordingQueryScrubTest );
+	MAYBE_RUN_TEST( ReStepRaceTest );
 	MAYBE_RUN_TEST( ShapeTest );
+	MAYBE_RUN_TEST( SnapshotTest );
 	MAYBE_RUN_TEST( ThreadTest );
 	MAYBE_RUN_TEST( WorldTest );
 
 	printf( "======================================\n" );
 	printf( "All Box2D tests passed!\n" );
+	
+	float duration = b2GetMilliseconds( ticks );
+	printf( "Test duration = %.2f s\n", 0.001f * duration );
 
 #ifdef TRACY_ENABLE
 	___tracy_shutdown_profiler();

@@ -63,6 +63,27 @@ typedef struct b2RayResult
 	bool hit;
 } b2RayResult;
 
+/// Optional world capacities that can be used to avoid run-time allocations.
+/// @see b2World_GetMaxCapacity
+/// @ingroup world
+typedef struct b2Capacity
+{
+	/// Number of expected static shapes.
+	int staticShapeCount;
+
+	/// Number of expected dynamic and kinematic shapes.
+	int dynamicShapeCount;
+
+	/// Number of expected static bodies.
+	int staticBodyCount;
+
+	/// Number of expected dynamic and kinematic bodies.
+	int dynamicBodyCount;
+
+	/// Number of expected contacts.
+	int contactCount;
+} b2Capacity;
+
 /// World definition used to create a simulation world.
 /// Must be initialized using b2DefaultWorldDef().
 /// @ingroup world
@@ -128,6 +149,9 @@ typedef struct b2WorldDef
 
 	/// User data
 	void* userData;
+
+	/// Optional initial capacities
+	b2Capacity capacity;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -211,7 +235,7 @@ typedef struct b2BodyDef
 	/// Sleep speed threshold, default is 0.05 meters per second
 	float sleepThreshold;
 
-	/// Optional body name for debugging. Up to 31 characters (excluding null termination)
+	/// Optional body name for debugging. Up to B2_NAME_LENGTH characters
 	const char* name;
 
 	/// Use this to store application specific body data.
@@ -239,7 +263,7 @@ typedef struct b2BodyDef
 	/// If you want a fast moving projectile to collide with a fast moving target, you need to consider the relative
 	/// movement in your ray or shape cast. This is out of the scope of Box2D.
 	/// So what are good use cases for bullets? Pinball games or games with dynamic containers that hold other objects.
-	/// It should be a use case where it doesn't break the game if there is a collision missed, but the having them
+	/// It should be a use case where it doesn't break the game if there is a collision missed, but having them
 	/// captured improves the quality of the game.
 	bool isBullet;
 
@@ -249,6 +273,10 @@ typedef struct b2BodyDef
 	/// This allows this body to bypass rotational speed limits. Should only be used
 	/// for circular objects, like wheels.
 	bool allowFastRotation;
+
+	/// Enable contact recycling. True by default. Leaving this enabled improves performance
+	/// but may lead to ghost collision that should be avoided on characters.
+	bool enableContactRecycling;
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	int internalValue;
@@ -400,16 +428,16 @@ typedef struct b2ShapeDef
 	/// @see enableSensorEvents
 	bool isSensor;
 
-	/// Enable sensor events for this shape. This applies to sensors and non-sensors. Both shapes involved must have this flag set to true.
-	/// False by default, even for sensors.
+	/// Enable sensor events for this shape. This applies to sensors and non-sensors. Both shapes involved must have this flag set
+	/// to true. False by default, even for sensors.
 	bool enableSensorEvents;
 
-	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
-	/// Ignored for sensors. False by default.
+	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this
+	/// flag set to true. Ignored for sensors. False by default.
 	bool enableContactEvents;
 
-	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag set to true.
-	/// Ignored for sensors. False by default.
+	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Only one shape involved needs this flag
+	/// set to true. Ignored for sensors. False by default.
 	bool enableHitEvents;
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
@@ -492,8 +520,8 @@ typedef struct b2Profile
 	float pairs;
 	float collide;
 	float solve;
-	float prepareStages;
-	float solveConstraints;
+	float solverSetup;
+	float constraints;
 	float prepareConstraints;
 	float integrateVelocities;
 	float warmStart;
@@ -516,6 +544,8 @@ typedef struct b2Profile
 /// Counters that give details of the simulation size.
 typedef struct b2Counters
 {
+	int64_t byteCount;
+
 	int bodyCount;
 	int shapeCount;
 	int contactCount;
@@ -524,9 +554,15 @@ typedef struct b2Counters
 	int stackUsed;
 	int staticTreeHeight;
 	int treeHeight;
-	int byteCount;
 	int taskCount;
 	int colorCounts[24];
+
+	// Number of contacts touched by the collide pass (graph contacts + awake-set non-touching).
+	int awakeContactCount;
+
+	// Number of contacts recycled in the most recent step.
+	int recycledContactCount;
+
 } b2Counters;
 //! @endcond
 
@@ -1327,15 +1363,9 @@ typedef enum b2HexColor
 	b2_colorBox2DYellow = 0xFFEE8C
 } b2HexColor;
 
-/// The type of contact point drawing
-typedef enum b2ContactDrawType
-{
-	b2_drawContacts_None = 0,
-	b2_drawContacts_Clip = 1,
-	b2_drawContacts_AnchorA = 2,
-	b2_drawContacts_AnchorB = 3,
-	b2_drawContacts_Average = 4,
-} b2ContactDrawType;
+/// Get the visualization color assigned to a constraint graph color slot. The last index
+/// (B2_GRAPH_COLOR_COUNT - 1) is the overflow color.
+B2_API b2HexColor b2GetGraphColor( int index );
 
 /// This struct holds callbacks you can implement to draw a Box2D world.
 /// This structure should be zero initialized.
@@ -1347,7 +1377,7 @@ typedef struct b2DebugDraw
 
 	/// Draw a solid closed polygon provided in CCW order.
 	void ( *DrawSolidPolygonFcn )( b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color,
-								void* context );
+								   void* context );
 
 	/// Draw a circle.
 	void ( *DrawCircleFcn )( b2Vec2 center, float radius, b2HexColor color, void* context );
@@ -1380,10 +1410,16 @@ typedef struct b2DebugDraw
 	float jointScale;
 
 	/// Option to draw contact points
-	b2ContactDrawType contactDrawType;
+	bool drawContacts;
+
+	/// Draw anchor A for contact points (instead of anchorB)
+	bool drawAnchorA;
 
 	/// Option to draw shapes
 	bool drawShapes;
+
+	/// Option to draw chain shape normals
+	bool drawChainNormals;
 
 	/// Option to draw joints
 	bool drawJoints;

@@ -13,48 +13,6 @@
 
 #define B2_TREE_STACK_SIZE 21024
 
-enum b2TreeNodeFlags
-{
-	b2_allocatedNode = 0x0001,
-	b2_enlargedNode = 0x0002,
-	b2_leafNode = 0x0004,
-};
-
-// A node in the dynamic tree.
-// todo externalize this to visualize internal nodes and speed up FindPairs
-typedef struct b2TreeNode
-{
-	// The node bounding box
-	b2AABB aabb; // 16
-
-	// Category bits for collision filtering
-	uint64_t categoryBits; // 8
-
-	union
-	{
-		// Children (internal node)
-		struct
-		{
-			int32_t child1, child2;
-		} children;
-
-		/// User data (leaf node)
-		uint64_t userData;
-	}; // 8
-
-	union
-	{
-		/// The node parent index (allocated node)
-		int32_t parent;
-
-		/// The node freelist next index (free node)
-		int32_t next;
-	}; // 4
-
-	uint16_t height; // 2
-	uint16_t flags;	 // 2
-} b2TreeNode;
-
 static b2TreeNode b2_defaultTreeNode = {
 	.aabb = { { 0.0f, 0.0f }, { 0.0f, 0.0f } },
 	.categoryBits = B2_DEFAULT_CATEGORY_BITS,
@@ -83,8 +41,10 @@ static uint16_t b2MaxUInt16( uint16_t a, uint16_t b )
 	return a > b ? a : b;
 }
 
-b2DynamicTree b2DynamicTree_Create( void )
+b2DynamicTree b2DynamicTree_Create( int proxyCapacity )
 {
+	int capacity = b2MaxInt( proxyCapacity, 16 );
+
 	b2DynamicTree tree;
 
 	// memset needed for deterministic serialization
@@ -92,7 +52,8 @@ b2DynamicTree b2DynamicTree_Create( void )
 
 	tree.root = B2_NULL_INDEX;
 
-	tree.nodeCapacity = 16;
+	// maximum node count for a full binary tree is 2 * leafCount - 1
+	tree.nodeCapacity = 2 * capacity - 1;
 	tree.nodeCount = 0;
 	tree.nodes = (b2TreeNode*)b2Alloc( tree.nodeCapacity * sizeof( b2TreeNode ) );
 
