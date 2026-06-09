@@ -312,7 +312,7 @@ b2BodyDef b2RecR_BODYDEF( b2RecReader* rdr )
 	def.isEnabled = b2RecR_BOOL( rdr );
 	def.allowFastRotation = b2RecR_BOOL( rdr );
 	def.enableContactRecycling = b2RecR_BOOL( rdr );
-	def.userData = NULL;
+	def.userData = ( b2UserDataId ){ 0 };
 	return def;
 }
 
@@ -331,7 +331,7 @@ b2ShapeDef b2RecR_SHAPEDEF( b2RecReader* rdr )
 	def.enablePreSolveEvents = b2RecR_BOOL( rdr );
 	def.invokeContactCreation = b2RecR_BOOL( rdr );
 	def.updateBodyMass = b2RecR_BOOL( rdr );
-	def.userData = NULL;
+	def.userData = ( b2UserDataId ){ 0 };
 	return def;
 }
 
@@ -376,7 +376,7 @@ b2ChainDef b2RecR_CHAINDEF( b2RecReader* rdr )
 	def.filter = b2RecR_FILTER( rdr );
 	def.isLoop = b2RecR_BOOL( rdr );
 	def.enableSensorEvents = b2RecR_BOOL( rdr );
-	def.userData = NULL;
+	def.userData = ( b2UserDataId ){ 0 };
 	return def;
 }
 

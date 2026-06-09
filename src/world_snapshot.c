@@ -189,7 +189,7 @@ static bool b2SnapCheckCount( const b2SnapReader* r, int count, int memSize, int
 		for ( int slot = 0; slot < ( arr ).count; ++slot )                                                                       \
 		{                                                                                                                        \
 			type elem = ( arr ).data[slot];                                                                                      \
-			elem.userData = NULL;                                                                                                \
+			memset( &elem.userData, 0, sizeof( elem.userData ) );                                                                                                \
 			b2SnapW_Bytes( buf, &elem, (int)sizeof( type ) );                                                                    \
 		}                                                                                                                        \
 	}                                                                                                                            \
